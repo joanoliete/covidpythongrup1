@@ -1,5 +1,3 @@
-
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -7,22 +5,18 @@ import networkx as nx
 import plotly.graph_objects as go
 from random import random
 
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__,  external_stylesheets=external_stylesheets)
-
-
 
 def escampa(G):
   for n in G.nodes:
     if G.nodes[n]['infectat']:
       # busquem els veins
       for v in G[n]:
-        if random() > 0.2 :
+        if random() > contagirate :
           G.nodes[v]['infectat']=True
           G.nodes[v]['color']="red"
   return (G)
-
 
 def create_graph_plot(G):
     edge_x = []
@@ -72,10 +66,16 @@ G.nodes[300]['infectat']=True
 
 # taula amb les colors a posar en segons el dia
 estats=[]
-dies=10
+contagirate=0.95
+diesmax=30
+contagiratemax=100
+vacinespercentagemax=100
+novacinespercentagemax=100
+quarantinedpopulationmax=100
+
 # poso el dia 0
 estats.append(nx.get_node_attributes(G,"color"))
-for i in range(1,dies) :
+for i in range(1,diesmax) :
   G=escampa(G)  
   # poso a estats el color del node segons el dia 
   estats.append(nx.get_node_attributes(G,"color"))
@@ -98,19 +98,88 @@ app.layout = html.Div(children=[
         id='xarxa',
         figure=fig
     ),
-
+    html.Div(children='''
+        Day
+    '''),
     html.Div(
         dcc.Slider(
             id='dia-slider',
             min=0,
-            max=dies,
+            max=diesmax,
             value=0,
-            marks={str(i): str(i) for  i in range(0,dies)},
+            marks={str(i): str(i) for  i in range(0,diesmax)},
             step=None
             ), 
+        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
+
+    html.Div(children='''
+        Contagium rate
+    '''),
+            html.Div(
+        dcc.Slider(
+            id='contagirate-slider',
+            min=0,
+            max=contagiratemax,
+            step=0.05,
+            value=0,
+            ), 
+        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
+
+        html.Div(children='''
+        Percentage of vaccined population
+    '''),
+            html.Div(
+        dcc.Slider(
+            id='vacinespercentage-slider',
+            min=0,
+            max=vacinespercentagemax,
+            value=0,
+            step=1
+            ), 
         style={'width': '49%', 'padding': '0px 20px 20px 20px'})
-       
+       ,
+
+        html.Div(children='''
+        Percentage of impracticable vaccination on population
+    '''),
+            html.Div(
+        dcc.Slider(
+            id='novacinespercentage-slider',
+            min=0,
+            max=novacinespercentagemax,
+            value=0,
+            step=1
+            ), 
+        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
+
+                html.Div(children='''
+        Percentage of population in quarantine
+    '''),
+            html.Div(
+        dcc.Slider(
+            id='quarantinedpopulation-slider',
+            min=0,
+            max=quarantinedpopulationmax,
+            value=0,
+            step=1
+            ), 
+        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
 ])
+
+
+@app.callback(
+    dash.dependencies.Output('contagirate-slider', 'children'),
+    [dash.dependencies.Input('contagirate-slider', 'value')])
+
+def update_output(value):
+    return 'Heu seleccionat una taxa de contagi de {}'.format(value)
+
+def update_graph(value):
+    nx.set_node_attributes(G,estats[value],'color')
+    fig = go.Figure(data=create_graph_plot(G))
+    # retornem la figura, que s'ha de substituir
+    return fig
+
 
 # indiquem que el output d'aquest callback es la figure del component amb id xarxa
 # # el callback te com a input un canvi en el dia--slider
@@ -118,6 +187,7 @@ app.layout = html.Div(children=[
 
             [ dash.dependencies.Input('dia-slider', 'value')
             ])
+
 def update_graph(dia):
     nx.set_node_attributes(G,estats[dia],'color')
     fig = go.Figure(data=create_graph_plot(G))
