@@ -68,6 +68,9 @@ vacinespercentagemax=100
 novacinespercentagemax=100
 quarantinedpopulationmax=100
 
+#Variable boolean
+tocat=False
+
 #Generem aleatoriament el graph
 global G 
 G = nx.dual_barabasi_albert_graph(2000,2,1,0.1)
@@ -107,9 +110,9 @@ app.layout = html.Div(children=[
             max=diesmax,
             value=0,
             marks={str(i): str(i) for  i in range(0,diesmax)},
-            step=None
+            step=None,
             ), 
-        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
+        style={'width': '50%', 'padding': '0px 20px 20px 20px'}),
 
     html.Div(children='''
         Contagium rate
@@ -121,9 +124,9 @@ app.layout = html.Div(children=[
             max=contagiratemax,
             step=0.05,
             value=0,
+            marks={str(i): str(i) for  i in range(0,contagiratemax)},
             ), 
-        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
-
+        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
         html.Div(children='''
         Percentage of vaccined population
     '''),
@@ -133,9 +136,10 @@ app.layout = html.Div(children=[
             min=0,
             max=vacinespercentagemax,
             value=0,
-            step=1
+            marks={str(i): str(i) for  i in range(0,vacinespercentagemax)},
+            step=1,
             ), 
-        style={'width': '49%', 'padding': '0px 20px 20px 20px'})
+        style={'width': '100%', 'padding': '0px 20px 20px 20px'})
        ,
 
         html.Div(children='''
@@ -147,9 +151,10 @@ app.layout = html.Div(children=[
             min=0,
             max=novacinespercentagemax,
             value=0,
-            step=1
+            step=1,
+            marks={str(i): str(i) for  i in range(0,novacinespercentagemax)},
             ), 
-        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
+        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
 
                 html.Div(children='''
         Percentage of population in quarantine
@@ -160,9 +165,10 @@ app.layout = html.Div(children=[
             min=0,
             max=quarantinedpopulationmax,
             value=0,
-            step=1
+            step=1,
+            marks={str(i): str(i) for  i in range(0,quarantinedpopulationmax)},
             ), 
-        style={'width': '49%', 'padding': '0px 20px 20px 20px'}),
+        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
     html.Button('Generate graph', id='button', n_clicks=0),
     html.Div(id='container-button-basic')
 ])
@@ -178,7 +184,14 @@ app.layout = html.Div(children=[
             dash.dependencies.Input('button', 'n_clicks')
             ])
 def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
-        if n_clicks > 0:
+        global estats
+        global tocat 
+        if tocat:
+            nx.set_node_attributes(G,estats[dia],"color")
+            fig = go.Figure(data=create_graph_plot(G))
+            return fig, n_clicks
+        if n_clicks == 1:
+            tocat = True
             #Primer eliminar aletoriament els nodes que estan en quarentena del graph depenent del input del usuari (exemple input 33)
             seed(1)
             sequenceeliminate = random.sample(range(round(len(list(G.nodes)))), round(len(list(G.nodes))*quarantine/100))
@@ -186,20 +199,19 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
                 G.remove_node(x)
 
             #Aqui cambiar l'estat dels nodes per 'novacunable' aleatoriament depenen del % del input del usuari (exemple input 33)
-            sequencenovaccinate = random.sample(range(round(len(list(G.nodes)))), round(len(list(G.nodes))*novacines/100))
+            sequencenovaccinate = random.sample(list(G.nodes), round(len(list(G.nodes))*novacines/100))
             for x in sequencenovaccinate:
                 G.nodes[x]['vacunable']=False
                 G.nodes[x]['color']="green"
 
             #Depenenet del anterior posar aleatoriament els nodes l'estat 'vacunat' depenen del % del input
-            sequencevaccinate = random.sample(range(round(len(list(G.nodes)))), round(len(list(G.nodes))*vacines/100))
+            sequencevaccinate = random.sample(list(G.nodes), round(len(list(G.nodes))*vacines/100))
             for x in sequencevaccinate:
                 if G.nodes[x]['color']!='green':
                     G.nodes[x]['vacunat']=True
                     G.nodes[x]['color']="green"
 
             #Generem estats 
-            estats=[]
             for i in range(1,diesmax) :
                 G1 = G
                 G1 = escampa(G, contagirate)
@@ -210,7 +222,7 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
             fig = go.Figure(data=create_graph_plot(G))
             # retornem la figura, que s'ha de substituir
             return fig, n_clicks
-        return
+        return n_clicks
 
 if __name__ == '__main__':
     app.run_server(debug=True)
