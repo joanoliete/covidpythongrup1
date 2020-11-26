@@ -112,23 +112,23 @@ app.layout = html.Div(children=[
             marks={str(i): str(i) for  i in range(0,diesmax)},
             step=None,
             ), 
-        style={'width': '50%', 'padding': '0px 20px 20px 20px'}),
+        style={'width': '30%', 'padding': '0px 20px 20px 20px'}),
 
     html.Div(children='''
-        Contagium rate
+        Contagium rate (%)
     '''),
             html.Div(
         dcc.Slider(
             id='contagirate-slider',
             min=0,
             max=contagiratemax,
-            step=0.05,
+            step=0.1,
             value=0,
-            marks={str(i): str(i) for  i in range(0,contagiratemax)},
             ), 
-        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
+        style={'width': '30%', 'padding': '0px 20px 20px 20px'}),
+        html.Div(id='contagi-output-container'),
         html.Div(children='''
-        Percentage of vaccined population
+        Percentage of vaccined population (%)
     '''),
             html.Div(
         dcc.Slider(
@@ -136,14 +136,12 @@ app.layout = html.Div(children=[
             min=0,
             max=vacinespercentagemax,
             value=0,
-            marks={str(i): str(i) for  i in range(0,vacinespercentagemax)},
             step=1,
             ), 
-        style={'width': '100%', 'padding': '0px 20px 20px 20px'})
-       ,
-
+        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
+        html.Div(id='vacines-output-container'),
         html.Div(children='''
-        Percentage of impracticable vaccination on population
+        Percentage of impracticable vaccination on population (%)
     '''),
             html.Div(
         dcc.Slider(
@@ -152,12 +150,11 @@ app.layout = html.Div(children=[
             max=novacinespercentagemax,
             value=0,
             step=1,
-            marks={str(i): str(i) for  i in range(0,novacinespercentagemax)},
             ), 
         style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
-
+        html.Div(id='novacines-output-container'),
                 html.Div(children='''
-        Percentage of population in quarantine
+        Percentage of population in quarantine (%)
     '''),
             html.Div(
         dcc.Slider(
@@ -166,22 +163,24 @@ app.layout = html.Div(children=[
             max=quarantinedpopulationmax,
             value=0,
             step=1,
-            marks={str(i): str(i) for  i in range(0,quarantinedpopulationmax)},
             ), 
         style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
+        html.Div(id='quarantine-output-container'),
     html.Button('Generate graph', id='button', n_clicks=0),
     html.Div(id='container-button-basic')
 ])
 
 # indiquem que el output d'aquest callback es la figure del component amb id xarxa
 # # el callback te com a input un canvi en el dia--slider
-@app.callback(dash.dependencies.Output('xarxa', 'figure'), dash.dependencies.Output('container-button-basic', 'children'),
+@app.callback(dash.dependencies.Output('xarxa', 'figure'),dash.dependencies.Output('contagi-output-container', 'children'),
+            dash.dependencies.Output('vacines-output-container', 'children'),dash.dependencies.Output('novacines-output-container', 'children'),
+            dash.dependencies.Output('quarantine-output-container', 'children'),
             [ dash.dependencies.Input('dia-slider', 'value'),
             dash.dependencies.Input('contagirate-slider', 'value'),
             dash.dependencies.Input('quarantinedpopulation-slider', 'value'),
             dash.dependencies.Input('novacinespercentage-slider', 'value'),
             dash.dependencies.Input('vacinespercentage-slider', 'value'),
-            dash.dependencies.Input('button', 'n_clicks')
+            dash.dependencies.Input('button', 'n_clicks'),
             ])
 def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
         global estats
@@ -189,7 +188,7 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
         if tocat:
             nx.set_node_attributes(G,estats[dia],"color")
             fig = go.Figure(data=create_graph_plot(G))
-            return fig, n_clicks
+            return fig, contagirate, vacines, novacines, quarantine
         if n_clicks == 1 and tocat==False:
             tocat = True
             #Primer eliminar aletoriament els nodes que estan en quarentena del graph depenent del input del usuari (exemple input 33)
@@ -221,8 +220,8 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
             nx.set_node_attributes(G,estats[dia],"color")
             fig = go.Figure(data=create_graph_plot(G))
             # retornem la figura, que s'ha de substituir
-            return fig, n_clicks
-        return [no_update, no_update]
+            return fig, contagirate, vacines, novacines, quarantine
+        return no_update, contagirate, vacines, novacines, quarantine
 
 if __name__ == '__main__':
     app.run_server(debug=True)
