@@ -8,9 +8,10 @@ import random
 from random import seed
 import plotly.express as px
 from dash.dash import no_update
+import dash_bootstrap_components as dbc
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__,  external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__,  external_stylesheets=[dbc.themes.CYBORG])
 
 def escampa(G, contagirate):
         for n in G.nodes:
@@ -18,7 +19,7 @@ def escampa(G, contagirate):
                 # busquem els veins
                 for v in G[n]:
                     if random.uniform(0,1) > 1-contagirate :
-                        if G.nodes[v]['vacunat']==True:
+                        if G.nodes[v]['color']=="green":
                             break
                         else:
                             G.nodes[v]['infectat']=True
@@ -90,85 +91,104 @@ estats.append(nx.get_node_attributes(G,"color"))
 
 nx.set_node_attributes(G,estats[0],"color")
 fig = go.Figure(data=create_graph_plot(G))
-
+fig.update_layout(plot_bgcolor='rgb(10,10,10)')
+alerts = html.Div(
+    [
+        dbc.Alert("This is a primary alert", color="primary"),
+        dbc.Alert("This is a secondary alert", color="secondary"),
+        dbc.Alert("This is a success alert! Well done!", color="success"),
+        dbc.Alert("This is a warning alert... be careful...", color="warning"),
+        dbc.Alert("This is a danger alert. Scary!", color="danger"),
+        dbc.Alert("This is an info alert. Good to know!", color="info"),
+        dbc.Alert("This is a light alert", color="light"),
+        dbc.Alert("This is a dark alert", color="dark"),
+    ]
+)
 app.layout = html.Div(children=[
-    html.H1(children='Evolució covid, mapa interactiu'),
+    html.H1(children='Evolució covid, mapa interactiu',style={'text-align': 'center'},),
     html.Div(children='''
         Un cop entrades les dades i generat el gràfic, es podrà anar pasant de dies en el slider automàticament
-    '''),
+    ''',style={'text-align': 'center'}),
     dcc.Graph(
     id='xarxa',
-    figure=fig
+    figure=fig,
+    style={'color': '#FFFFFF'}
     ),
-    html.Div(children='''
-        Day
-    '''),
-    html.Div(
-        dcc.Slider(
-            id='dia-slider',
-            min=0,
-            max=diesmax,
-            value=0,
-            marks={str(i): str(i) for  i in range(0,diesmax)},
-            step=None,
-            ), 
-        style={'width': '30%', 'padding': '0px 20px 20px 20px'}),
-
-    html.Div(children='''
-        Contagium rate (%)
-    '''),
-            html.Div(
-        dcc.Slider(
-            id='contagirate-slider',
-            min=0,
-            max=contagiratemax,
-            step=0.1,
-            value=0,
-            ), 
-        style={'width': '30%', 'padding': '0px 20px 20px 20px'}),
-        html.Div(id='contagi-output-container'),
         html.Div(children='''
-        Percentage of vaccined population (%)
-    '''),
-            html.Div(
-        dcc.Slider(
-            id='vacinespercentage-slider',
-            min=0,
-            max=vacinespercentagemax,
-            value=0,
-            step=1,
-            ), 
-        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
-        html.Div(id='vacines-output-container'),
+            Day
+        ''',
+        style={'margin-top': '10px'}
+        ),
+        html.Div(
+            dcc.Slider(
+                id='dia-slider',
+                min=0,
+                max=diesmax,
+                value=0,
+                marks={str(i): str(i) for  i in range(0,diesmax)},
+                step=None,
+                )
+            ),
+            
+            
         html.Div(children='''
-        Percentage of impracticable vaccination on population (%)
-    '''),
-            html.Div(
-        dcc.Slider(
-            id='novacinespercentage-slider',
-            min=0,
-            max=novacinespercentagemax,
-            value=0,
-            step=1,
-            ), 
-        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
-        html.Div(id='novacines-output-container'),
+            Contagium rate (%)
+        '''),
+                html.Div(
+                    dcc.Slider(
+                        id='contagirate-slider',
+                        min=0,
+                        max=contagiratemax,
+                        step=0.1,
+                        value=0,
+                        )),
+                html.Div(id='contagi-output-container',style={'margin-left': 'auto','margin-right': 'auto'}),
                 html.Div(children='''
-        Percentage of population in quarantine (%)
-    '''),
+                    Percentage of vaccined population (%)
+                    '''),
+                html.Div(
+            dcc.Slider(
+                id='vacinespercentage-slider',
+                min=0,
+                max=vacinespercentagemax,
+                value=0,
+                step=1,
+                )), 
+            html.Div(id='vacines-output-container'),
+            html.Div(children='''
+            Percentage of impracticable vaccination on population (%)
+        '''),
+                html.Div(
+            dcc.Slider(
+                id='novacinespercentage-slider',
+                min=0,
+                max=novacinespercentagemax,
+                value=0,
+                step=1,
+                )),
+            html.Div(id='novacines-output-container'),
+            
+                    html.Div(children='''
+            Percentage of population in quarantine (%)
+        ''',),
+                html.Div(
+            dcc.Slider(
+                id='quarantinedpopulation-slider',
+                min=0,
+                max=quarantinedpopulationmax,
+                value=0,
+                step=1,
+                )),
+            html.Div(id='quarantine-output-container'),
+
             html.Div(
-        dcc.Slider(
-            id='quarantinedpopulation-slider',
-            min=0,
-            max=quarantinedpopulationmax,
-            value=0,
-            step=1,
-            ), 
-        style={'width': '100%', 'padding': '0px 20px 20px 20px'}),
-        html.Div(id='quarantine-output-container'),
-    html.Button('Generate graph', id='button', n_clicks=0),
-    html.Div(id='container-button-basic')
-])
+            dbc.Button('Generate graph', id='button', n_clicks=0),
+            style={'padding': '10px'}
+            ),
+
+        html.Div(id='container-button-basic')
+], 
+className='text-center')
 
 # indiquem que el output d'aquest callback es la figure del component amb id xarxa
 # # el callback te com a input un canvi en el dia--slider
