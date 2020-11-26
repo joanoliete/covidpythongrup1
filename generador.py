@@ -7,6 +7,7 @@ from dash.dependencies import Input, Output
 import random
 from random import seed
 import plotly.express as px
+from dash.dash import no_update
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__,  external_stylesheets=external_stylesheets)
@@ -61,7 +62,6 @@ def create_graph_plot(G):
     return (edge_trace,node_trace)
 
 #Variables maximes
-contagirate=1
 diesmax=15
 contagiratemax=100
 vacinespercentagemax=100
@@ -92,9 +92,9 @@ nx.set_node_attributes(G,estats[0],"color")
 fig = go.Figure(data=create_graph_plot(G))
 
 app.layout = html.Div(children=[
-    html.H1(children='Evolució covid'),
+    html.H1(children='Evolució covid, mapa interactiu'),
     html.Div(children='''
-        Dash: A web application framework for Python.
+        Un cop entrades les dades i generat el gràfic, es podrà anar pasant de dies en el slider automàticament
     '''),
     dcc.Graph(
     id='xarxa',
@@ -190,7 +190,7 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
             nx.set_node_attributes(G,estats[dia],"color")
             fig = go.Figure(data=create_graph_plot(G))
             return fig, n_clicks
-        if n_clicks == 1:
+        if n_clicks == 1 and tocat==False:
             tocat = True
             #Primer eliminar aletoriament els nodes que estan en quarentena del graph depenent del input del usuari (exemple input 33)
             seed(1)
@@ -222,7 +222,7 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
             fig = go.Figure(data=create_graph_plot(G))
             # retornem la figura, que s'ha de substituir
             return fig, n_clicks
-        return n_clicks
+        return [no_update, no_update]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
