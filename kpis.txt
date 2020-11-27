@@ -1,0 +1,2 @@
+==> Infected:    Quarantinee Cost:112000.0Euros    Vaccines Cost:18000.0Euros
+==> Infected:    Quarantinee Cost:120000.0Euros    Vaccines Cost:18000.0Euros

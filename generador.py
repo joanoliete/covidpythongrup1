@@ -9,6 +9,7 @@ from random import seed
 import plotly.express as px
 from dash.dash import no_update
 import dash_bootstrap_components as dbc
+import os
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__,  external_stylesheets=[dbc.themes.CYBORG])
@@ -239,6 +240,21 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
 
             nx.set_node_attributes(G,estats[dia],"color")
             fig = go.Figure(data=create_graph_plot(G))
+
+            
+            infected=0
+            #nx.set_node_attributes(G,estats[14],"color")
+            #for i in range(1, round(len(list(G.nodes)))):
+            #    if G.nodes[i]['color']=='red':
+            #        infected=infected+1
+
+            file = open("kpis.txt", "a") 
+            file.write("==> Infected:"+infected)
+            file.write("    Quarantinee Cost:"+str(quarantine/100*2000*400)+"Euros" ) #Cost de posar en quarentena 14 dies 400$
+            file.write("    Vaccines Cost:"+str(vacines/100*2000*60)+"Euros" ) #Cost de vacunar una persona 60$ 
+            file.write("\n")
+            file.close() 
+
             # retornem la figura, que s'ha de substituir
             return fig, contagirate, vacines, novacines, quarantine
         return no_update, contagirate, vacines, novacines, quarantine
