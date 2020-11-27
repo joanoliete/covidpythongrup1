@@ -9,7 +9,12 @@ from random import seed
 import plotly.express as px
 from dash.dash import no_update
 import dash_bootstrap_components as dbc
+import dash_html_components as html
 import os
+import pandas as pd
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__,  external_stylesheets=[dbc.themes.CYBORG])
@@ -69,6 +74,7 @@ contagiratemax=100
 vacinespercentagemax=100
 novacinespercentagemax=100
 quarantinedpopulationmax=100
+infecteddpopulationmax=100
 
 #Variable boolean
 tocat=False
@@ -83,8 +89,6 @@ nx.set_node_attributes(G,"blue",'color')
 nx.set_node_attributes(G,False,'infectat')
 nx.set_node_attributes(G,False,'vacunat')
 nx.set_node_attributes(G,True,'vacunable')
-G.nodes[300]['color']="red"
-G.nodes[300]['infectat']=True
 
 #Generem estats 
 estats=[]
@@ -93,6 +97,26 @@ estats.append(nx.get_node_attributes(G,"color"))
 nx.set_node_attributes(G,estats[0],"color")
 fig = go.Figure(data=create_graph_plot(G))
 fig.update_layout(plot_bgcolor='rgb(10,10,10)')
+
+#Boxplot KPIs
+kpicontagis=[]
+kpicostvacuna=[]
+kpicostcuarantena=[]
+with open('kpis.txt','r') as fin:
+    lines = fin.readlines()
+    for line in lines:
+        # do something
+        text=line.split(',')
+        kpicontagis.append(text[0])
+        kpicostvacuna.append(text[1])
+        kpicostcuarantena.append(text[2])
+
+d={'kpicontagis': kpicontagis,'kpicostvacuna':kpicostvacuna, 'kpicostcuarantena':kpicostcuarantena }
+np.random.seed(1234)
+df = pd.DataFrame(data = np.random.random(size=(4,3)), columns = ['kpicontagis','kpicostvacuna','kpicostcuarantena'])
+df.plot(kind='box')
+
+
 alerts = html.Div(
     [
         dbc.Alert("This is a primary alert", color="primary"),
@@ -106,89 +130,138 @@ alerts = html.Div(
     ]
 )
 app.layout = html.Div(children=[
+
     html.H1(children='Evolució covid, mapa interactiu',style={'text-align': 'center'},),
-    html.Div(children='''
-        Un cop entrades les dades i generat el gràfic, es podrà anar pasant de dies en el slider automàticament
-    ''',style={'text-align': 'center'}),
-    dcc.Graph(
-    id='xarxa',
-    figure=fig,
-    style={'color': '#FFFFFF'}
-    ),
-        html.Div(children='''
-            Day
-        ''',
-        style={'margin-top': '10px'}
-        ),
-        html.Div(
-            dcc.Slider(
-                id='dia-slider',
-                min=0,
-                max=diesmax,
-                value=0,
-                marks={str(i): str(i) for  i in range(0,diesmax)},
-                step=None,
+    dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                html.P("Un cop entrades les dades i generat el gràfic, es podrà anar pasant de dies en el slider automàticament", className="card-text"),
+                dcc.Graph(
+                    id='xarxa',
+                    figure=fig,
+                    style={'color': '#FFFFFF'}
                 )
-            ),
-            
-            
-        html.Div(children='''
-            Contagium rate (%)
-        '''),
-                html.Div(
-                    dcc.Slider(
-                        id='contagirate-slider',
-                        min=0,
-                        max=contagiratemax,
-                        step=0.1,
-                        value=0,
-                        )),
-                html.Div(id='contagi-output-container',style={'margin-left': 'auto','margin-right': 'auto'}),
-                html.Div(children='''
-                    Percentage of vaccined population (%)
-                    '''),
-                html.Div(
-            dcc.Slider(
-                id='vacinespercentage-slider',
-                min=0,
-                max=vacinespercentagemax,
-                value=0,
-                step=1,
-                )), 
-            html.Div(id='vacines-output-container'),
-            html.Div(children='''
-            Percentage of impracticable vaccination on population (%)
-        '''),
-                html.Div(
-            dcc.Slider(
-                id='novacinespercentage-slider',
-                min=0,
-                max=novacinespercentagemax,
-                value=0,
-                step=1,
-                )),
-            html.Div(id='novacines-output-container'),
-            
-                    html.Div(children='''
-            Percentage of population in quarantine (%)
-        ''',),
-                html.Div(
-            dcc.Slider(
-                id='quarantinedpopulation-slider',
-                min=0,
-                max=quarantinedpopulationmax,
-                value=0,
-                step=1,
-                )),
-            html.Div(id='quarantine-output-container'),
+            ]
+        ),
+    ],
+     className='col-lg-12 text-center'
+    ),
+    
+dbc.Row([
+    dbc.Col(
 
-            html.Div(
-            dbc.Button('Generate graph', id='button', n_clicks=0),
-            style={'padding': '10px'}
+        dbc.Card(
+        [
+            dbc.CardBody(
+                [
+                    html.P("Decidex els valors que vulguis i mira com evoluciona la pandèmia", className="card-text"),
+                    html.Div(children='''Day''',
+                        style={'margin-top': '10px'}
+                    ),
+                    html.Div(
+                        dcc.Slider(
+                            id='dia-slider',
+                            min=0,
+                            max=diesmax,
+                            value=0,
+                            marks={str(i): str(i) for  i in range(0,diesmax)},
+                            step=None,
+                        )
+                    ),
+                
+                
+                    html.Div(children='''Contagium rate (%)'''),
+                    html.Div(
+                        dcc.Slider(
+                            id='contagirate-slider',
+                            min=0,
+                            max=contagiratemax,
+                            step=0.1,
+                            value=0,
+                        )
+                    ),
+                    html.Div(id='contagi-output-container',style={'margin-left': 'auto','margin-right': 'auto'}),
+                    html.Div(children='''Percentage of vaccined population (%)'''),
+                    html.Div(
+                        dcc.Slider(
+                            id='vacinespercentage-slider',
+                            min=0,
+                            max=vacinespercentagemax,
+                            value=0,
+                            step=1,
+                        )
+                    ), 
+                    html.Div(id='vacines-output-container'),
+                    html.Div(children='''Percentage of impracticable vaccination on population (%)'''),
+                    html.Div(
+                        dcc.Slider(
+                            id='novacinespercentage-slider',
+                            min=0,
+                            max=novacinespercentagemax,
+                            value=0,
+                            step=1,
+                        )
+                    ),
+                    html.Div(id='novacines-output-container'),
+                
+                    html.Div(children='''Percentage of population in quarantine (%)'''),
+                    html.Div(
+                        dcc.Slider(
+                            id='quarantinedpopulation-slider',
+                            min=0,
+                            max=quarantinedpopulationmax,
+                            value=0,
+                            step=1,
+                        )
+                    ),
+                    html.Div(id='quarantine-output-container'),
+    
+                    html.Div(children='''Percentage of infected (%)'''),
+                    html.Div(
+                        dcc.Slider(
+                            id='infectedpopulation-slider',
+                            min=0,
+                            max=infecteddpopulationmax,
+                            value=0,
+                            step=0.5,
+                        )
+                    ),
+                    html.Div(id='infected-output-container'),
+                    html.Div(
+                    dbc.Button('Generate graph', id='button', n_clicks=0),
+                        style={'padding': '10px'}
+                    )
+                ]
             ),
+        ],
+        className='text-center',
+        style={'margin-top':'24px'}
+        ),
+        width=6,
+    ),
 
-        html.Div(id='container-button-basic')
-], 
+    dbc.Col(
+        dbc.Card(
+        [
+            dbc.CardBody(
+                [
+                    html.P("BOXPLOT GOES HERE", className="card-text")
+                ]
+            ),
+        ],
+        style={'margin-top':'24px'},
+        className='text-center'
+        ),
+        width=6
+    ),
+]),   
+
+
+    html.Div(id='container-button-basic'),
+
+],
+style={'padding': '50px'},
 className='text-center')
 
 # indiquem que el output d'aquest callback es la figure del component amb id xarxa
@@ -196,20 +269,23 @@ className='text-center')
 @app.callback(dash.dependencies.Output('xarxa', 'figure'),dash.dependencies.Output('contagi-output-container', 'children'),
             dash.dependencies.Output('vacines-output-container', 'children'),dash.dependencies.Output('novacines-output-container', 'children'),
             dash.dependencies.Output('quarantine-output-container', 'children'),
+            dash.dependencies.Output('infected-output-container', 'children'),
             [ dash.dependencies.Input('dia-slider', 'value'),
             dash.dependencies.Input('contagirate-slider', 'value'),
             dash.dependencies.Input('quarantinedpopulation-slider', 'value'),
             dash.dependencies.Input('novacinespercentage-slider', 'value'),
             dash.dependencies.Input('vacinespercentage-slider', 'value'),
+            dash.dependencies.Input('infectedpopulation-slider', 'value'),
             dash.dependencies.Input('button', 'n_clicks'),
             ])
-def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
+def update_graph(dia, contagirate, quarantine, novacines, vacines, infected, n_clicks):
         global estats
         global tocat 
         if tocat:
             nx.set_node_attributes(G,estats[dia],"color")
             fig = go.Figure(data=create_graph_plot(G))
-            return fig, contagirate, vacines, novacines, quarantine
+            fig.update_layout(plot_bgcolor='rgb(10,10,10)')
+            return fig, contagirate, vacines, novacines, quarantine, infected
         if n_clicks == 1 and tocat==False:
             tocat = True
             #Primer eliminar aletoriament els nodes que estan en quarentena del graph depenent del input del usuari (exemple input 33)
@@ -227,9 +303,16 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
             #Depenenet del anterior posar aleatoriament els nodes l'estat 'vacunat' depenen del % del input
             sequencevaccinate = random.sample(list(G.nodes), round(len(list(G.nodes))*vacines/100))
             for x in sequencevaccinate:
-                if G.nodes[x]['color']!='green':
+                if G.nodes[x]['color']!="green":
                     G.nodes[x]['vacunat']=True
                     G.nodes[x]['color']="green"
+
+            #Infected people
+            sequenceinfected = random.sample(list(G.nodes), round(len(list(G.nodes))*infected/100))
+            for x in sequenceinfected:
+                if G.nodes[x]['color']!="green":
+                    G.nodes[x]['color']="red"
+                    G.nodes[x]['infectat']=True
 
             #Generem estats 
             for i in range(1,diesmax) :
@@ -240,24 +323,26 @@ def update_graph(dia, contagirate, quarantine, novacines, vacines, n_clicks):
 
             nx.set_node_attributes(G,estats[dia],"color")
             fig = go.Figure(data=create_graph_plot(G))
+            fig.update_layout(plot_bgcolor='rgb(10,10,10)')
+            #KPIs
+            infectedtotal=0
 
-            
-            infected=0
             #nx.set_node_attributes(G,estats[14],"color")
             #for i in range(1, round(len(list(G.nodes)))):
             #    if G.nodes[i]['color']=='red':
             #        infected=infected+1
 
             file = open("kpis.txt", "a") 
-            file.write("==> Infected:"+infected)
-            file.write("    Quarantinee Cost:"+str(quarantine/100*2000*400)+"Euros" ) #Cost de posar en quarentena 14 dies 400$
-            file.write("    Vaccines Cost:"+str(vacines/100*2000*60)+"Euros" ) #Cost de vacunar una persona 60$ 
+            file.write(str(infected)+",")
+            file.write(str(quarantine/100*2000*500)+",") #Cost de posar en quarentena 14 dies 500$
+            file.write(str(vacines/100*2000*50)) #Cost de vacunar una persona 50$
+                                          #Maxim infectat amb un dia
             file.write("\n")
             file.close() 
 
             # retornem la figura, que s'ha de substituir
-            return fig, contagirate, vacines, novacines, quarantine
-        return no_update, contagirate, vacines, novacines, quarantine
+            return fig, contagirate, vacines, novacines, quarantine, infected
+        return no_update, contagirate, vacines, novacines, quarantine, infected
 
 if __name__ == '__main__':
     app.run_server(debug=True)
